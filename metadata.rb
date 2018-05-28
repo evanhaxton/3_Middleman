@@ -20,3 +20,4 @@ chef_version '>= 12.14' if respond_to?(:chef_version)
 # source_url 'https://github.com/<insert_org_here>/3_Middleman'
 
 depends 'apt', '~> 7.0.0'
+depends 'tar', '~> 2.1.1'

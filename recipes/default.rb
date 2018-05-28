@@ -8,6 +8,62 @@
 apt_update 'update'
 
 # apt-get install build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3
-package %w( build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3 ) do
-  action :install
+apt_package %w( build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3 ) do
+  action :upgrade
+end
+
+# make working directory
+directory 'ruby' do
+  mode '0755'
+  path '/home/vagrant/ruby'
+  action :create
+end
+
+# download tarball
+# wget http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz
+remote_file '/home/vagrant/ruby/ruby-2.1.3.tar.gz' do
+  source 'http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz'
+  not_if { ::File.exist?('/home/vagrant/ruby/ruby-2.1.3.tar.gz') }
+end
+
+# extract tarball to /home/vagrant/ruby
+tar_extract '/home/vagrant/ruby/ruby-2.1.3.tar.gz' do
+  action :extract_local
+  target_dir '/home/vagrant/ruby'
+  notifies :run, 'execute[build_ruby]', :immediately
+  creates '/home/vagrant/ruby/ruby-2.1.3/README'
+end
+
+# Build ruby
+# cd ruby-2.1.3 & ./configure & make install
+execute 'build_ruby' do
+  command 'sudo ./configure && sudo make install'
+  cwd '/home/vagrant/ruby/ruby-2.1.3'
+  not_if { ::File.exist?('/usr/local/bin/ruby') }
+end
+
+# rm -rf ~/ruby
+directory '/home/vagrant/ruby' do
+  recursive true
+  action :delete
+end
+
+# cp /usr/local/bin/ruby /usr/bin/ruby
+file '/usr/bin/ruby' do
+  owner 'root'
+  group 'root'
+  mode 0755
+  content ::File.open('/usr/local/bin/ruby').read
+  action :create
+  not_if { ::File.exist?('/usr/bin/ruby') }
+end
+
+# cp /usr/local/bin/gem /usr/bin/gem
+file '/usr/bin/gem' do
+  owner 'root'
+  group 'root'
+  mode 0755
+  content ::File.open('/usr/local/bin/gem').read
+  action :create
+  not_if { ::File.exist?('/usr/bin/gem') }
 end
