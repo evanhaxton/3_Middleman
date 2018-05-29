@@ -1,5 +1,9 @@
 # 3_Middleman Cookbook Changelog
 
+# 0.3.0
+
+- Install and configure apache version 2
+
 # 0.2.0
 
 - Install ruby

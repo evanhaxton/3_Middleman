@@ -17,6 +17,7 @@ directory 'ruby' do
   mode '0755'
   path '/home/vagrant/ruby'
   action :create
+  not_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # download tarball
@@ -31,7 +32,7 @@ tar_extract '/home/vagrant/ruby/ruby-2.1.3.tar.gz' do
   action :extract_local
   target_dir '/home/vagrant/ruby'
   notifies :run, 'execute[build_ruby]', :immediately
-  creates '/home/vagrant/ruby/ruby-2.1.3/README'
+  creates '/usr/bin/ruby'
 end
 
 # Build ruby
@@ -46,6 +47,7 @@ end
 directory '/home/vagrant/ruby' do
   recursive true
   action :delete
+  not_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # cp /usr/local/bin/ruby /usr/bin/ruby
@@ -66,4 +68,38 @@ file '/usr/bin/gem' do
   content ::File.open('/usr/local/bin/gem').read
   action :create
   not_if { ::File.exist?('/usr/bin/gem') }
+end
+
+# apt-get install apache2
+apt_package 'apache2'
+
+# Configure apache2
+
+# a2enmod proxy_http
+execute 'proxy_http' do
+  command 'sudo a2enmod proxy_http'
+  not_if { ::File.exist?('/etc/apache2/mods-enabled/proxy_http.load') }
+end
+
+# a2enmod rewrite
+execute 'proxy_http' do
+  command 'sudo a2enmod rewrite'
+  not_if { ::File.exist?('/etc/apache2/mods-enabled/rewrite.load') }
+end
+
+# cp blog.conf /etc/apache2/sites-enabled/blog.conf
+template '/etc/apache2/sites-enabled/blog.conf' do
+  source 'blog.conf.erb'
+end
+
+# rm /etc/apache2/sites-enabled/000-default.conf
+file '/etc/apache2/sites-enabled/000-default.conf' do
+  action :delete
+  manage_symlink_source true
+  only_if { File.exist? '/etc/apache2/sites-enabled/000-default.conf' }
+end
+
+# Restart apache
+service 'apache2' do
+  action :reload
 end
