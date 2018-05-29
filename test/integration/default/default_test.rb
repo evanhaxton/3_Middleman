@@ -44,3 +44,10 @@ end
 describe file('/etc/apache2/sites-enabled/blog.conf') do
   it { should exist }
 end
+
+# Validate that apache2 configuration file rewrite has been installed
+describe user('apache') do
+  it { should exist }
+  its('home') { should eq '/home/apache' }
+  its('shell') { should eq '/bin/bash' }
+end

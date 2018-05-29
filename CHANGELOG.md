@@ -1,5 +1,11 @@
 # 3_Middleman Cookbook Changelog
 
+# 0.4.0
+
+- Install git
+
+  Install git repository middleman-blog
+
 # 0.3.0
 
 - Install and configure apache version 2

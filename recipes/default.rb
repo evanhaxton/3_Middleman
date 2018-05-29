@@ -47,7 +47,7 @@ end
 directory '/home/vagrant/ruby' do
   recursive true
   action :delete
-  not_if { ::File.exist?('/usr/local/bin/ruby') }
+  only_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # cp /usr/local/bin/ruby /usr/bin/ruby
@@ -102,4 +102,40 @@ end
 # Restart apache
 service 'apache2' do
   action :reload
+end
+
+# Install Git
+# apt-get install git
+apt_package 'git'
+
+# Install Middleman blog repository
+# git clone https://github.com/learnchef/middleman-blog.git
+git '/home/vagrant/middleman-blog' do
+  repository 'https://github.com/learnchef/middleman-blog.git'
+  revision 'master'
+  action :checkout
+end
+
+# Install Bundler
+# gem install bundler
+gem_package 'bundler' do
+  action :install
+end
+
+# Install new user to install gem files
+user 'apache' do
+  manage_home true
+  comment 'Apache user'
+  home '/home/apache'
+  shell '/bin/bash'
+  password 'apache'
+end
+
+# Install project dependencies
+
+# bundle install
+execute 'bundle_install' do
+  command 'bundle install'
+  cwd '/home/vagrant/middleman-blog'
+  user 'apache'
 end
