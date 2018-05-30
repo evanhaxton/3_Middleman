@@ -1,5 +1,9 @@
 # 3_Middleman Cookbook Changelog
 
+# 0.6.1
+
+- Corrected a deploy issue with Middleman
+
 # 0.6.0
 
 - Fixed connection issue with test kitchen

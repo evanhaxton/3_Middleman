@@ -72,7 +72,7 @@ describe file('/home/apache/.bundle/cache/compact_index') do
   it { should exist }
 end
 
-# Required configuration to deploy middleman to apache
-describe file('/var/www/middleman') do
+# Middleman has been deployed
+describe file('/var/www/middleman/config.rb') do
   it { should exist }
 end

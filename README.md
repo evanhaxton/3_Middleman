@@ -60,9 +60,9 @@ Environment validation
 ======================
 
 o Login into the deployed instance utilizing `kitchen login`
-o Change directory middleman-blog
-o Run 'bundle exec middleman'
+o Change directory /home/apache/middleman-blog
+o Run 'sudo middleman server'
 
 From your local browser enter the following
 
-http://0.0.0.0:4567 or http://localhost:4567 to produce browser output
+http://0.0.0.0:4567 to produce browser output

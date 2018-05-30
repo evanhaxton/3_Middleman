@@ -217,3 +217,9 @@ end
 service 'thin' do
   action :restart
 end
+
+# deploy middleman
+execute 'middleman deploy' do
+  command 'sudo middleman init /var/www/middleman'
+  not_if { ::File.exist?('/var/www/middleman/config.rb') }
+end
