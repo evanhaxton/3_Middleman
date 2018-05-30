@@ -23,7 +23,7 @@ end
 # wget http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz
 remote_file '/home/vagrant/ruby/ruby-2.1.3.tar.gz' do
   source 'http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.3.tar.gz'
-  not_if { ::File.exist?('/home/vagrant/ruby/ruby-2.1.3.tar.gz') }
+  not_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # extract tarball to /home/vagrant/ruby
@@ -96,7 +96,7 @@ end
 file '/etc/apache2/sites-enabled/000-default.conf' do
   action :delete
   manage_symlink_source true
-  only_if { File.exist? '/etc/apache2/sites-enabled/000-default.conf' }
+  only_if { ::File.exist?('/etc/apache2/sites-enabled/000-default.conf') }
 end
 
 # Restart apache
@@ -108,44 +108,35 @@ end
 # apt-get install git
 apt_package 'git'
 
-# Install Middleman blog repository
-# git clone https://github.com/learnchef/middleman-blog.git
-git '/home/vagrant/middleman-blog' do
-  repository 'https://github.com/learnchef/middleman-blog.git'
-  revision 'master'
-  user 'vagrant'
-  action :checkout
-  not_if { ::File.exist?('/home/vagrant/middleman-blog') }
+# Create apache user
+user 'apache' do
+  manage_home true
+  comment 'Apache User'
+  home '/home/apache'
+  shell '/bin/bash'
+  password 'apache'
 end
 
-# Install Bundler
-# gem install bundler
-gem_package 'bundler' do
-  version '1.16.1'
-  action :install
-  not_if { :: File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/bundler-1.16.1') }
-end
-
-# Grant vagrant user sudo access
-sudo 'vagrant' do
-  user 'vagrant'
+sudo 'apache' do
+  user 'apache'
   nopasswd true
 end
 
 # Install project dependencies
 
-# Make /home/vagrant writable
-directory '/home/vagrant' do
+# Make /home/apache writable
+directory '/home/apache' do
   mode '0757'
   action :create
 end
 
 # make working directory for bundle install
-directory '/home/vagrant/.bundle/cache/compact_index' do
+directory '/home/apache/.bundle/cache/compact_index' do
   mode '1777'
   recursive true
+  owner 'apache'
   action :create
-  not_if { :: File.exist?('/home/vagrant/.bundle/cache/compact_index') }
+  not_if { ::File.exist?('/home/apache/.bundle/cache/compact_index') }
 end
 
 # make working directory for bundle install
@@ -155,27 +146,66 @@ directory '/tmp' do
   action :create
 end
 
+# Install Middleman blog repository
+# git clone https://github.com/learnchef/middleman-blog.git
+git '/home/apache/middleman-blog' do
+  repository 'https://github.com/learnchef/middleman-blog.git'
+  revision 'master'
+  user 'apache'
+  action :checkout
+  not_if { ::File.exist?('/home/apache/middleman-blog') }
+end
+
+# Install Bundler
+# gem install bundler
+gem_package 'bundler' do
+  version '1.16.1'
+  action :install
+  not_if { ::File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/bundler-1.16.1') }
+end
+
+# Create apache user
+user 'apache' do
+  manage_home true
+  comment 'Apache User'
+  home '/home/apache'
+  shell '/bin/bash'
+  password 'apache'
+end
+
+sudo 'apache' do
+  user 'apache'
+  nopasswd true
+end
+
 # bundle install
 execute 'bundle_install' do
   command 'bundle install'
   environment 'tmpdir' => '/tmp'
-  cwd '/home/vagrant/middleman-blog'
-  user 'vagrant'
-  not_if { :: File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/middleman-3.1.0') }
+  cwd '/home/apache/middleman-blog'
+  user 'apache'
+  not_if { ::File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/middleman-3.1.0') }
 end
 
 # establish configuration file
 template '/etc/blog.yml' do
   source 'blog.yml.erb'
-  variables project_install_directory: '/home/vagrant/thin'
-  not_if { :: File.exist?('/etc/blog.yml') }
+  variables project_install_directory: '/var/www/middleman'
+  not_if { ::File.exist?('/etc/blog.yml') }
+end
+
+# make working directory
+directory 'middleman' do
+  mode '0755'
+  path '/var/www/middleman'
+  action :create
 end
 
 template '/etc/init.d/thin' do
   source 'thin.erb'
   mode '0755'
-  variables home_directory: '/var/www'
-  not_if { :: File.exist?('/etc/init.d/thin') }
+  variables home_directory: '/var/www/middleman'
+  not_if { ::File.exist?('/etc/init.d/thin') }
 end
 
 # thin install /usr/sbin/update-rc.d -f thin defaults
@@ -183,6 +213,7 @@ execute 'thin install' do
   command '/usr/sbin/update-rc.d -f thin defaults'
 end
 
+# restart service
 service 'thin' do
   action :restart
 end

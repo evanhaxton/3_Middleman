@@ -66,8 +66,3 @@ o Run 'bundle exec middleman'
 From your local browser enter the following
 
 http://0.0.0.0:4567 or http://localhost:4567 to produce browser output
-
-Of note:
-=======
-As of this current iteration, both `kitchen converge` and `kitchen verify` are failing to connect
-to the Vagrant instance.

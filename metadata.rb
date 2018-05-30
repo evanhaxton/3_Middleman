@@ -3,8 +3,8 @@ maintainer 'Evan Haxton'
 maintainer_email 'ehaxton@gmail.com'
 license 'apachev2'
 description 'Installs/Configures Middleman ruby application'
-long_description 'Installs/Configures Middleman ruby application'
-version '0.4.0'
+long_description 'Please refer to full description in README.md'
+version '0.6.0'
 chef_version '>= 12.14' if respond_to?(:chef_version)
 
 # The `issues_url` points to the location where issues for this cookbook are

@@ -57,7 +57,7 @@ describe file('/usr/bin/git') do
 end
 
 # Validate that middleman blog exists
-describe file('/home/vagrant/middleman-blog') do
+describe file('/home/apache/middleman-blog') do
   it { should exist }
 end
 
@@ -68,11 +68,11 @@ describe file('/usr/local/lib/ruby/gems/2.1.0/gems/bundler-1.16.1') do
 end
 
 # Required working directory
-describe file('/home/vagrant/.bundle/cache/compact_index') do
+describe file('/home/apache/.bundle/cache/compact_index') do
   it { should exist }
 end
 
-# Required configuration for thin install
-describe file('/etc/blog.yml') do
+# Required configuration to deploy middleman to apache
+describe file('/var/www/middleman') do
   it { should exist }
 end
