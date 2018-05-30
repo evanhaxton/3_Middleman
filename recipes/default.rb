@@ -8,8 +8,8 @@
 apt_update 'update'
 
 # apt-get install build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3
-apt_package %w( build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3 ) do
-  action :upgrade
+apt_package %w( build-essential libssl-dev libyaml-dev libreadline-dev openssl curl git-core zlib1g-dev bison libxml2-dev libxslt1-dev libcurl4-openssl-dev nodejs libsqlite3-dev sqlite3) do
+  action :install
 end
 
 # make working directory
@@ -17,7 +17,6 @@ directory 'ruby' do
   mode '0755'
   path '/home/vagrant/ruby'
   action :create
-  not_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # download tarball
@@ -33,6 +32,7 @@ tar_extract '/home/vagrant/ruby/ruby-2.1.3.tar.gz' do
   target_dir '/home/vagrant/ruby'
   notifies :run, 'execute[build_ruby]', :immediately
   creates '/usr/bin/ruby'
+  not_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # Build ruby
@@ -47,7 +47,7 @@ end
 directory '/home/vagrant/ruby' do
   recursive true
   action :delete
-  only_if { ::File.exist?('/usr/local/bin/ruby') }
+  only_if { ::File.exist?('/home/vagrant/ruby') }
 end
 
 # cp /usr/local/bin/ruby /usr/bin/ruby
@@ -55,9 +55,9 @@ file '/usr/bin/ruby' do
   owner 'root'
   group 'root'
   mode 0755
-  content ::File.open('/usr/local/bin/ruby').read
+  lazy { content ::File.open('/usr/local/bin/ruby').read }
   action :create
-  not_if { ::File.exist?('/usr/bin/ruby') }
+  only_if { ::File.exist?('/usr/local/bin/ruby') }
 end
 
 # cp /usr/local/bin/gem /usr/bin/gem
@@ -65,9 +65,9 @@ file '/usr/bin/gem' do
   owner 'root'
   group 'root'
   mode 0755
-  content ::File.open('/usr/local/bin/gem').read
+  lazy { content ::File.open('/usr/local/bin/gem').read }
   action :create
-  not_if { ::File.exist?('/usr/bin/gem') }
+  only_if { ::File.exist?('/usr/local/bin/gem') }
 end
 
 # apt-get install apache2
@@ -113,29 +113,76 @@ apt_package 'git'
 git '/home/vagrant/middleman-blog' do
   repository 'https://github.com/learnchef/middleman-blog.git'
   revision 'master'
+  user 'vagrant'
   action :checkout
+  not_if { ::File.exist?('/home/vagrant/middleman-blog') }
 end
 
 # Install Bundler
 # gem install bundler
 gem_package 'bundler' do
+  version '1.16.1'
   action :install
+  not_if { :: File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/bundler-1.16.1') }
 end
 
-# Install new user to install gem files
-user 'apache' do
-  manage_home true
-  comment 'Apache user'
-  home '/home/apache'
-  shell '/bin/bash'
-  password 'apache'
+# Grant vagrant user sudo access
+sudo 'vagrant' do
+  user 'vagrant'
+  nopasswd true
 end
 
 # Install project dependencies
 
+# Make /home/vagrant writable
+directory '/home/vagrant' do
+  mode '0757'
+  action :create
+end
+
+# make working directory for bundle install
+directory '/home/vagrant/.bundle/cache/compact_index' do
+  mode '1777'
+  recursive true
+  action :create
+  not_if { :: File.exist?('/home/vagrant/.bundle/cache/compact_index') }
+end
+
+# make working directory for bundle install
+directory '/tmp' do
+  mode '1777'
+  recursive true
+  action :create
+end
+
 # bundle install
 execute 'bundle_install' do
   command 'bundle install'
+  environment 'tmpdir' => '/tmp'
   cwd '/home/vagrant/middleman-blog'
-  user 'apache'
+  user 'vagrant'
+  not_if { :: File.exist?('/usr/local/lib/ruby/gems/2.1.0/gems/middleman-3.1.0') }
+end
+
+# establish configuration file
+template '/etc/blog.yml' do
+  source 'blog.yml.erb'
+  variables project_install_directory: '/home/vagrant/thin'
+  not_if { :: File.exist?('/etc/blog.yml') }
+end
+
+template '/etc/init.d/thin' do
+  source 'thin.erb'
+  mode '0755'
+  variables home_directory: '/var/www'
+  not_if { :: File.exist?('/etc/init.d/thin') }
+end
+
+# thin install /usr/sbin/update-rc.d -f thin defaults
+execute 'thin install' do
+  command '/usr/sbin/update-rc.d -f thin defaults'
+end
+
+service 'thin' do
+  action :restart
 end

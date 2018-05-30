@@ -46,8 +46,33 @@ describe file('/etc/apache2/sites-enabled/blog.conf') do
 end
 
 # Validate that apache2 configuration file rewrite has been installed
-describe user('apache') do
+describe file('/etc/apache2/sites-enabled/000-default.conf') do
+  it { should_not exist }
+end
+
+# Validate that git has been installed
+describe file('/usr/bin/git') do
   it { should exist }
-  its('home') { should eq '/home/apache' }
-  its('shell') { should eq '/bin/bash' }
+  its('mode') { should cmp '0755' }
+end
+
+# Validate that middleman blog exists
+describe file('/home/vagrant/middleman-blog') do
+  it { should exist }
+end
+
+# Validate that gem bundler has been installed
+describe file('/usr/local/lib/ruby/gems/2.1.0/gems/bundler-1.16.1') do
+  it { should exist }
+  its('mode') { should cmp '0755' }
+end
+
+# Required working directory
+describe file('/home/vagrant/.bundle/cache/compact_index') do
+  it { should exist }
+end
+
+# Required configuration for thin install
+describe file('/etc/blog.yml') do
+  it { should exist }
 end

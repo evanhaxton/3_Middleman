@@ -4,7 +4,7 @@ maintainer_email 'ehaxton@gmail.com'
 license 'apachev2'
 description 'Installs/Configures Middleman ruby application'
 long_description 'Installs/Configures Middleman ruby application'
-version '0.1.0'
+version '0.4.0'
 chef_version '>= 12.14' if respond_to?(:chef_version)
 
 # The `issues_url` points to the location where issues for this cookbook are
@@ -21,3 +21,4 @@ chef_version '>= 12.14' if respond_to?(:chef_version)
 
 depends 'apt', '~> 7.0.0'
 depends 'tar', '~> 2.1.1'
+depends 'sudo', '~> 5.4.0'

@@ -14,6 +14,14 @@ verifier:
 
 platforms:
   - name: ubuntu-16.04
+    driver:
+        network:
+          - [ 'forwarded_port', { guest: 4567, host: 4567 } ]
+          - [ 'private_network', { ip: '127.0.0.1' } ]
+        transport:
+          username: vagrant
+          password: vagrant
+          ssh_key_only: true
 
 suites:
   - name: default

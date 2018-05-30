@@ -1,5 +1,11 @@
 # 3_Middleman Cookbook Changelog
 
+# 0.5.0
+
+- Install gems
+
+  Install thin server and service
+
 # 0.4.0
 
 - Install git
